@@ -12,6 +12,8 @@
 **Управление**
 
 Игровой процесс:
+
+
 ![image](https://github.com/user-attachments/assets/6e4aae2a-d544-491e-9848-587fbda55df1)
 ![image](https://github.com/user-attachments/assets/98b0625e-ec58-4a8b-843f-5904c46fed86)
 ![image](https://github.com/user-attachments/assets/b4e23fd3-1301-422f-a551-ae0dbbf6b9de)
