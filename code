@@ -1,0 +1,181 @@
+#include <iostream>
+#include <vector>
+#include <ctime>
+#include <cstdlib>
+#include <iomanip>
+
+using namespace std;
+
+const int SIZE = 9; // Размер поля 9x9
+
+class Sudoku {
+private:
+    vector<vector<int>> board;    // Текущее игровое поле
+    vector<vector<int>> solution; // Полное решение судоку
+
+    // Проверка: можно ли вставить число num в ячейку row,col без нарушений
+    bool isSafe(int row, int col, int num) {
+        for (int x = 0; x < SIZE; x++) {
+            if (board[row][x] == num || board[x][col] == num)
+                return false;
+        }
+
+        // Проверка в соответствующем 3x3 блоке
+        int startRow = row - row % 3;
+        int startCol = col - col % 3;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i + startRow][j + startCol] == num)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    // Рекурсивный метод для решения судоку (backtracking)
+    bool solveSudoku() {
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                if (board[row][col] == 0) {
+                    for (int num = 1; num <= SIZE; num++) {
+                        if (isSafe(row, col, num)) {
+                            board[row][col] = num;
+                            if (solveSudoku())
+                                return true;
+                            board[row][col] = 0; // откат
+                        }
+                    }
+                    return false; // не нашли подходящее число
+                }
+            }
+        }
+        return true; // все ячейки заполнены
+    }
+
+    // Удаление случайных ячеек в соответствии с уровнем сложности
+    void removeDigits(int count) {
+        while (count > 0) {
+            int row = rand() % SIZE;
+            int col = rand() % SIZE;
+            if (board[row][col] != 0) {
+                board[row][col] = 0;
+                count--;
+            }
+        }
+    }
+
+public:
+    // Конструктор: инициализация пустого поля
+    Sudoku() {
+        board = vector<vector<int>>(SIZE, vector<int>(SIZE, 0));
+    }
+
+    // Генерация судоку с заданным уровнем сложности
+    void generatePuzzle(string difficulty) {
+        srand(time(0));
+
+        solveSudoku(); // сначала решаем судоку полностью
+        solution = board; // сохраняем решение
+
+        int clues;
+        if (difficulty == "easy") clues = 40;
+        else if (difficulty == "middle") clues = 30;
+        else clues = 20; // hard
+
+        board = solution;
+        removeDigits(SIZE * SIZE - clues); // удаляем лишние числа
+    }
+
+    // Вывод игрового поля на экран
+    void printBoard() {
+        cout << "\n    1 2 3   4 5 6   7 8 9" << endl;
+        for (int i = 0; i < SIZE; i++) {
+            if (i % 3 == 0 && i != 0)
+                cout << "   -------+-------+------\n";
+            cout << i + 1 << " | ";
+            for (int j = 0; j < SIZE; j++) {
+                if (j % 3 == 0 && j != 0) cout << "| ";
+                if (board[i][j] == 0)
+                    cout << ". ";
+                else
+                    cout << board[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+
+    // Проверка, можно ли изменить ячейку (если она была изначально пуста)
+    bool isCellEditable(int row, int col) {
+        return board[row][col] == 0;
+    }
+
+    // Делает ход игрока и проверяет его корректность
+    bool makeMove(int row, int col, int num) {
+        if (solution[row][col] == num) {
+            board[row][col] = num;
+            return true;
+        }
+        return false;
+    }
+
+    // Проверка: все ли ячейки заполнены
+    bool isComplete() {
+        for (int i = 0; i < SIZE; i++)
+            for (int j = 0; j < SIZE; j++)
+                if (board[i][j] == 0)
+                    return false;
+        return true;
+    }
+};
+
+int main() {
+    setlocale(LC_ALL, "RU");
+    string difficulty;
+    cout << "Выберите уровень сложности (easy, middle, hard): ";
+    cin >> difficulty;
+
+    Sudoku game;
+    game.generatePuzzle(difficulty); // генерация игры
+
+    int lives = 3; // начальное количество жизней
+    while (lives > 0) {
+        game.printBoard(); // показ текущего поля
+
+        if (game.isComplete()) {
+            cout << "Поздравляем! Вы решили судоку!\n";
+            break;
+        }
+
+        int row, col, num;
+        cout << "Введите ваш ход (строка [1-9] столбец [1-9] число [1-9]): ";
+        cin >> row >> col >> num;
+        row--; col--; // переход к индексации с нуля
+
+        // Проверка корректности ввода
+        if (row < 0 || row >= SIZE || col < 0 || col >= SIZE || num < 1 || num > 9) {
+            cout << "Неверный ввод. Попробуйте снова.\n";
+            continue;
+        }
+
+        // Проверка возможности редактирования ячейки
+        if (!game.isCellEditable(row, col)) {
+            cout << "Ячейка не доступна для изменения.\n";
+            continue;
+        }
+
+        // Попытка сделать ход
+        if (game.makeMove(row, col, num)) {
+            cout << "Ход принят!\n";
+        }
+        else {
+            lives--;
+            cout << "Неправильный ход! Осталось жизней: " << lives << "\n";
+        }
+    }
+
+    if (lives == 0) {
+        cout << "Игра окончена! У вас не осталось жизней.\n";
+    }
+
+    return 0;
+}
